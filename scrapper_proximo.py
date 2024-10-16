@@ -123,7 +123,7 @@ if __name__ == "__main__":
 
     browser.get_info_test(by=By.CLASS_NAME, value="box-header-h")
 
-    selected_hour = "12:00 hs"
+    selected_hour = "19:00 hs"
 
     filtrados = browser.filter_turns(hour=selected_hour)
 
@@ -139,4 +139,4 @@ if __name__ == "__main__":
 
     end_time = time.time()
     duration = end_time - start_time
-    print(f"Duración del script: {duration:.2f} segundos")  # Imprime la duración
+    print(f"Duración del script: {duration:.2f} segundos")  
