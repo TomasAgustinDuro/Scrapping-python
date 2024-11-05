@@ -1,44 +1,20 @@
-name: Run Python Script
+name: Run EXE
 
 on:
   push:
     branches:
-      - main  # O la rama que quieras monitorear
+      - main  # O la rama que desees
+  pull_request:
 
 jobs:
-  run-script:
-    runs-on: ubuntu-latest
+  run-exe:
+    runs-on: windows-latest  # Asegúrate de usar un runner de Windows
 
     steps:
-    - name: Checkout code
+    - name: Check out repository
       uses: actions/checkout@v2
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.10'
-
-    - name: Install dependencies
+    - name: Run the EXE
       run: |
-        python -m venv venv
-        . venv/bin/activate
-        pip install --upgrade pip  # Actualiza pip
-        pip install -r requirements.txt  # Asegúrate de que webdriver_manager esté en este archivo
-
-    - name: Install Chrome and ChromeDriver
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y wget unzip
-        wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-        sudo dpkg -i google-chrome-stable_current_amd64.deb || true
-        sudo apt-get -f install -y
-        CHROME_DRIVER_VERSION=$(curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE)
-        wget https://chromedriver.storage.googleapis.com/$CHROME_DRIVER_VERSION/chromedriver_linux64.zip
-        unzip chromedriver_linux64.zip
-        sudo mv chromedriver /usr/local/bin/chromedriver
-        sudo chmod +x /usr/local/bin/chromedriver
-
-    - name: Run script
-      run: |
-        . venv/bin/activate
-        MY_USERNAME=${{ secrets.MY_USERNAME }} MY_PASSWORD=${{ secrets.MY_PASSWORD }} TOKEN=${{ secrets.TOKEN }} CHAT_ID=${{ secrets.CHAT_ID }} python scrapper_proximo.py
+        cd build  # Cambia al directorio donde está tu EXE
+        ../scrapper_date.eze 
