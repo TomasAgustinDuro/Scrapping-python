@@ -16,5 +16,4 @@ jobs:
 
     - name: Run the EXE
       run: |
-        cd build  # Cambia al directorio donde está tu EXE
-        ../scrapper_date.eze 
+        .\scrapper_date.exe
