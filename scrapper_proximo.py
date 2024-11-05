@@ -8,6 +8,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from typing import TypedDict, List
 from telegram_sender import enviar_mensaje_telegram
 from dotenv import load_dotenv
+from webdriver_manager.chrome import ChromeDriverManager
 
 load_dotenv()
 
@@ -26,18 +27,19 @@ class Turnos(TypedDict):
 
 
 class Browser:
-    browser, service = None, None
+    browser: webdriver.Chrome
     turnos: List[Turnos] = []
 
-    def __init__(self, driver: str):
-        self.service = Service(driver)
+    def __init__(self):
+        # Usa el controlador de Chrome de webdriver_manager
+        self.service = Service(ChromeDriverManager().install())
         self.browser = webdriver.Chrome(service=self.service)
 
     def open_page(self, url: str):
         self.browser.get(url)
 
     def close_browser(self):
-        self.browser.close()
+        self.browser.quit()
 
     def add_inputs(self, by: By, value: str, text: str):
         field = WebDriverWait(self.browser, 10).until(
@@ -67,20 +69,19 @@ class Browser:
         return horarios
 
     def get_info_test(self, by: By, value: str):
-            div = self.browser.find_element(by=by, value=value)
+        div = self.browser.find_element(by=by, value=value)
+        inputs = div.find_elements(By.CSS_SELECTOR, "div > input")
 
-            inputs = div.find_elements(By.CSS_SELECTOR, "div > input")
+        for input in inputs:
+            dia = input.get_attribute("data-date")
+            input.click()
+            time.sleep(1)
+            horarios = self.get_info_selector(by=By.ID, value="hoursBody")
+            time.sleep(1)
+            turno: Turnos = {"dia": dia, "horarios": horarios}
+            self.turnos.append(turno)
 
-            for input in inputs:
-                dia = input.get_attribute("data-date")
-                input.click()
-                time.sleep(1)
-                horarios = browser.get_info_selector(by=By.ID, value="hoursBody")
-                time.sleep(1)
-                turno: Turnos = {"dia": dia, "horarios": horarios}
-                self.turnos.append(turno)
-
-            print(self.turnos)
+        print(self.turnos)
 
     def filter_turns(self, hour: str):
         def has_hour(turno: Turnos) -> bool:
@@ -91,52 +92,57 @@ class Browser:
 
 
 if __name__ == "__main__":
-    # medir duración de script
     start_time = time.time()
 
-    browser = Browser(r"Drivers\chromedriver.exe")
+    try:
+        browser = Browser()
+        browser.open_page(url_login)
 
-    browser.open_page(url_login)
-    WebDriverWait(browser.browser, 10).until(
-        EC.presence_of_element_located((By.ID, "zocial-mail"))
-    )
+        WebDriverWait(browser.browser, 10).until(
+            EC.presence_of_element_located((By.ID, "zocial-mail"))
+        )
 
-    browser.click_button(by=By.ID, value="zocial-mail")
+        browser.click_button(by=By.ID, value="zocial-mail")
 
-    WebDriverWait(browser.browser, 10).until(
-        EC.presence_of_element_located((By.ID, "password-text-field"))
-    )
+        WebDriverWait(browser.browser, 10).until(
+            EC.presence_of_element_located((By.ID, "password-text-field"))
+        )
 
-    browser.login_linkedin(username=my_username, password=my_password)
+        browser.login_linkedin(username=my_username, password=my_password)
 
-    browser.open_page(url_reserva)
+        browser.open_page(url_reserva)
 
-    WebDriverWait(browser.browser, 10).until(
-        EC.presence_of_element_located((By.CSS_SELECTOR, '[data-start="primeros"]'))
-    )
+        WebDriverWait(browser.browser, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, '[data-start="primeros"]'))
+        )
 
-    browser.click_button(by=By.CSS_SELECTOR, value='[data-start="primeros"]')
+        browser.click_button(by=By.CSS_SELECTOR, value='[data-start="primeros"]')
 
-    WebDriverWait(browser.browser, 10).until(
-        EC.presence_of_element_located((By.CLASS_NAME, "box-header-h"))
-    )
+        WebDriverWait(browser.browser, 10).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "box-header-h"))
+        )
 
-    browser.get_info_test(by=By.CLASS_NAME, value="box-header-h")
+        browser.get_info_test(by=By.CLASS_NAME, value="box-header-h")
 
-    selected_hour = "12:00 hs"
+        selected_hour = "12:00 hs"
 
-    filtrados = browser.filter_turns(hour=selected_hour)
+        filtrados = browser.filter_turns(hour=selected_hour)
 
-    if filtrados:
-        token = os.getenv("TOKEN")
-        chat_id = os.getenv("CHAT_ID")
+        if filtrados:
+            token = os.getenv("TOKEN")
+            chat_id = os.getenv("CHAT_ID")
 
-        mensaje = f"¡Se ha encontrado un turno disponible para las {selected_hour}! Para reservar el turno accede al siguiente link {url_reserva}"
+            mensaje = f"¡Se ha encontrado un turno disponible para las {selected_hour}! Para reservar el turno accede al siguiente link {url_reserva}"
 
-        enviar_mensaje_telegram(mensaje, chat_id, token)
-    else:
-        print("No hay horarios")
+            enviar_mensaje_telegram(mensaje, chat_id, token)
+        else:
+            print("No hay horarios")
+
+    except Exception as e:
+        print(f"Ocurrió un error: {e}")
+    finally:
+        browser.close_browser()  # Asegúrate de cerrar el navegador al final
 
     end_time = time.time()
     duration = end_time - start_time
-    print(f"Duración del script: {duration:.2f} segundos")  
+    print(f"Duración del script: {duration:.2f} segundos")
