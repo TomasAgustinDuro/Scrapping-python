@@ -1,4 +1,4 @@
-name: Run EXE
+name: Run Python Script
 
 on:
   push:
@@ -7,13 +7,28 @@ on:
   pull_request:
 
 jobs:
-  run-exe:
-    runs-on: windows-latest  # Asegúrate de usar un runner de Windows
+  run-script:
+    runs-on: ubuntu-latest  # Puedes usar ubuntu-latest o windows-latest según sea necesario
 
     steps:
-    - name: Check out repository
+    - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: Run the EXE
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.9'  # Especifica la versión de Python que necesitas
+
+    - name: Install dependencies
       run: |
-        .\scrapper_date
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt  # Asegúrate de tener un archivo requirements.txt en tu repositorio
+
+    - name: Run the script
+      env:  # Establece las variables de entorno necesarias
+        MY_USERNAME: ${{ secrets.MY_USERNAME }}
+        MY_PASSWORD: ${{ secrets.MY_PASSWORD }}
+        TOKEN: ${{ secrets.TOKEN }}
+        CHAT_ID: ${{ secrets.CHAT_ID }}
+      run: |
+        python ../scrapper_date.py
