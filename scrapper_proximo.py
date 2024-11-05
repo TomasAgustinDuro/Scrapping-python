@@ -93,6 +93,7 @@ class Browser:
 
 if __name__ == "__main__":
     start_time = time.time()
+    browser = None
 
     try:
         browser = Browser()
@@ -136,12 +137,13 @@ if __name__ == "__main__":
 
             enviar_mensaje_telegram(mensaje, chat_id, token)
         else:
-            print("No hay horarios")
+            print("No hay horarios disponibles para la hora seleccionada.")
 
     except Exception as e:
         print(f"Ocurrió un error: {e}")
     finally:
-        browser.close_browser()  # Asegúrate de cerrar el navegador al final
+        if browser:
+            browser.close_browser()  # Asegúrate de cerrar el navegador al final
 
     end_time = time.time()
     duration = end_time - start_time
