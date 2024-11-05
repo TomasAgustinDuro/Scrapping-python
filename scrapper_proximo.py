@@ -31,7 +31,6 @@ class Browser:
     turnos: List[Turnos] = []
 
     def __init__(self):
-        # Usa el controlador de Chrome de webdriver_manager
         self.service = Service(ChromeDriverManager().install())
         self.browser = webdriver.Chrome(service=self.service)
 
@@ -103,7 +102,7 @@ if __name__ == "__main__":
             EC.presence_of_element_located((By.ID, "zocial-mail"))
         )
 
-        browser.click_button(by=By.ID, value="zocial-mail")
+        browser.click_button(by=By.ID, "zocial-mail")
 
         WebDriverWait(browser.browser, 10).until(
             EC.presence_of_element_located((By.ID, "password-text-field"))
@@ -117,13 +116,13 @@ if __name__ == "__main__":
             EC.presence_of_element_located((By.CSS_SELECTOR, '[data-start="primeros"]'))
         )
 
-        browser.click_button(by=By.CSS_SELECTOR, value='[data-start="primeros"]')
+        browser.click_button(by=By.CSS_SELECTOR, '[data-start="primeros"]')
 
         WebDriverWait(browser.browser, 10).until(
             EC.presence_of_element_located((By.CLASS_NAME, "box-header-h"))
         )
 
-        browser.get_info_test(by=By.CLASS_NAME, value="box-header-h")
+        browser.get_info_test(by=By.CLASS_NAME, "box-header-h")
 
         selected_hour = "12:00 hs"
 
@@ -137,14 +136,3 @@ if __name__ == "__main__":
 
             enviar_mensaje_telegram(mensaje, chat_id, token)
         else:
-            print("No hay horarios disponibles para la hora seleccionada.")
-
-    except Exception as e:
-        print(f"Ocurrió un error: {e}")
-    finally:
-        if browser:
-            browser.close_browser()  # Asegúrate de cerrar el navegador al final
-
-    end_time = time.time()
-    duration = end_time - start_time
-    print(f"Duración del script: {duration:.2f} segundos")
