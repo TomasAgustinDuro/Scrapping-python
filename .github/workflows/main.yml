@@ -26,4 +26,4 @@ jobs:
     - name: Run script
       run: |
         . venv/bin/activate
-        python scrapper_proximo.py  # Reemplaza con el nombre de tu script
+        MY_USERNAME=${{ secrets.MY_USERNAME }} MY_PASSWORD=${{ secrets.MY_PASSWORD }} python scrapper_proximo.py  # Usa los secretos aquí
