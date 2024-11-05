@@ -16,4 +16,4 @@ jobs:
 
     - name: Run the EXE
       run: |
-        .\scrapper_date.exe
+        .\scrapper_date
