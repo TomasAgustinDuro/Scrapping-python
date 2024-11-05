@@ -24,6 +24,19 @@ jobs:
         . venv/bin/activate
         pip install -r requirements.txt
 
+    - name: Install Chrome and ChromeDriver
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y wget unzip
+        wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+        sudo dpkg -i google-chrome-stable_current_amd64.deb || true
+        sudo apt-get -f install -y
+        CHROME_DRIVER_VERSION=$(curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE)
+        wget https://chromedriver.storage.googleapis.com/$CHROME_DRIVER_VERSION/chromedriver_linux64.zip
+        unzip chromedriver_linux64.zip
+        sudo mv chromedriver /usr/local/bin/chromedriver
+        sudo chmod +x /usr/local/bin/chromedriver
+
     - name: Run script
       run: |
         . venv/bin/activate
