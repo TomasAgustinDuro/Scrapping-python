@@ -1,8 +1,9 @@
 name: Run Python Script
 
 on:
-  schedule:
-    - cron: '*/1 * * * *'  # Esto ejecuta el workflow cada minuto
+  push:
+    branches:
+      - main  # O la rama que quieras monitorear
 
 jobs:
   run-script:
@@ -21,7 +22,8 @@ jobs:
       run: |
         python -m venv venv
         . venv/bin/activate
-        pip install -r requirements.txt
+        pip install --upgrade pip  # Actualiza pip
+        pip install -r requirements.txt  # Asegúrate de que webdriver_manager esté en este archivo
 
     - name: Install Chrome and ChromeDriver
       run: |
