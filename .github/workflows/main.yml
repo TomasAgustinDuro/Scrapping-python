@@ -1,8 +1,9 @@
 name: Run Python Script
 
 on:
-  schedule:
-    - cron: '*/1 * * * *'  # Esto ejecuta el workflow cada minuto
+  push:
+    branches:
+      - main  # Esto ejecuta el workflow cada vez que se hace push a la rama main
 
 jobs:
   run-script:
@@ -26,4 +27,4 @@ jobs:
     - name: Run script
       run: |
         . venv/bin/activate
-        MY_USERNAME=${{ secrets.MY_USERNAME }} MY_PASSWORD=${{ secrets.MY_PASSWORD }} python scrapper_proximo.py  # Usa los secretos aquí
+        MY_USERNAME=${{ secrets.MY_USERNAME }} MY_PASSWORD=${{ secrets.MY_PASSWORD }} TOKEN=${{ secrets.TOKEN }} CHAT_ID=${{ secrets.CHAT_ID }} python scrapper_proximo.py
