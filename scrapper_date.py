@@ -9,6 +9,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from typing import TypedDict, List
 from telegram_sender import enviar_mensaje_telegram
 from dotenv import load_dotenv
+from webdriver_manager.chrome import ChromeDriverManager
 
 load_dotenv()
 
@@ -27,12 +28,14 @@ class Turnos(TypedDict):
 
 
 class Browser:
-    browser, service = None, None
+    browser: webdriver.Chrome
     turnos: List[Turnos] = []
 
-    def __init__(self, driver: str):
-        self.service = Service(driver)
-        self.browser = webdriver.Chrome(service=self.service)
+    def __init__(self):
+        # Usar webdriver_manager para manejar el driver
+        self.browser = webdriver.Chrome(
+            service=Service(ChromeDriverManager().install())
+        )
 
     def open_page(self, url: str):
         self.browser.get(url)
@@ -69,9 +72,7 @@ class Browser:
 
     def get_info_test(self, by: By, value: str):
         try:
-
             div = self.browser.find_element(by=by, value=value)
-
             divButton = self.browser.find_element(
                 By.CSS_SELECTOR, "div.container-button"
             )
@@ -81,33 +82,26 @@ class Browser:
 
             for input in inputs:
                 try:
-                    # Obtiene el valor del atributo data-date
                     dia = input.get_attribute("data-date")
                     if dia != "":
                         input.click()
                         time.sleep(1)
 
-                        # Comprueba si el botón de guardar está visible y habilitado
                         if save_button.is_displayed() and save_button.is_enabled():
                             save_button.click()
                             time.sleep(1)
 
-                            # Toma los valores de los horarios después de hacer clic en guardar
                             horarios = self.browser.find_element(
                                 By.ID, "hoursBody"
                             ).text
 
-                            # Asegúrate de definir el turno aquí
                             turno = {"dia": dia, "horarios": horarios}
-
                             if dia:
                                 self.turnos.append(turno)
 
-                            # Espera a que el botón de editar sea clicable
                             edit_button = WebDriverWait(self.browser, 10).until(
                                 EC.element_to_be_clickable((By.ID, "edit"))
                             )
-
                             edit_button.click()
                             time.sleep(1)
                         else:
@@ -123,19 +117,21 @@ class Browser:
         except Exception as e:
             print(f"Error al procesar la información: {str(e)}")
 
-    def filter_turns(self, hour: str):
+    def filter_turns(self, hours: List[str]):
         def has_hour(turno: Turnos) -> bool:
-            return hour in turno["horarios"]
+            # Verifica si alguna de las horas seleccionadas está presente en el turno
+            return any(hour in turno["horarios"] for hour in hours)
 
         filtered_turns = list(filter(has_hour, self.turnos))
         return filtered_turns
+
 
 
 if __name__ == "__main__":
     # medir duración de script
     start_time = time.time()
 
-    browser = Browser(r"Drivers\chromedriver.exe")
+    browser = Browser()
 
     browser.open_page(url_login)
 
@@ -165,31 +161,41 @@ if __name__ == "__main__":
 
     browser.get_info_test(By.ID, "calendar")
 
-    selected_hour = "19:00 hs"
+    selected_hours = ["15:00 hs", "19:00 hs"]  # Lista de horas a filtrar
     dias_formateados = []
 
-    filtrados = browser.filter_turns(hour=selected_hour)
+    # Inicializa diccionarios para almacenar días filtrados
+turnos_por_hora = {hour: [] for hour in selected_hours}
 
-    dias_formateados = [
-        datetime.strptime(filtrado["dia"], "%Y-%m-%d").strftime("%d/%m")
-        for filtrado in filtrados
-    ]
+# Filtra los turnos utilizando la nueva lista de horas
+filtrados = browser.filter_turns(hours=selected_hours)
 
-    if filtrados:
-        token = os.getenv("TOKEN")
-        chat_id = os.getenv("CHAT_ID")
+# Formatear los días obtenidos y llenar el diccionario
+for filtrado in filtrados:
+    dia_formateado = datetime.strptime(filtrado["dia"], "%Y-%m-%d").strftime("%d/%m")
+    for hour in selected_hours:
+        if hour in filtrado["horarios"]:
+            turnos_por_hora[hour].append(dia_formateado)
 
-        if len(dias_formateados) > 1:
-            dias_texto = ", ".join(dias_formateados)
-        else:
-            dias_texto = dias_formateados[0]
+# Construir el mensaje
+token = os.getenv("TOKEN")
+chat_id = os.getenv("CHAT_ID")
 
-        mensaje = f"¡Se ha encontrado un turno disponible para las {selected_hour}! Es el dia {dias_texto} Para reservar el turno accede al siguiente link {url_reserva}"
+mensajes = []
+for hour, dias in turnos_por_hora.items():
+    if dias:
+        dias_texto = ", ".join(dias)
+        mensajes.append(f"Turnos disponibles a las {hour}: {dias_texto}")
 
-        enviar_mensaje_telegram(mensaje, chat_id, token)
-    else:
-        print("No hay horarios")
+# Verificar si hay mensajes que enviar
+if mensajes:
+    mensaje = "¡Se han encontrado turnos disponibles!\n" + "\n".join(mensajes) + f"\nPara reservar, accede al siguiente link {url_reserva}"
+else:
+    mensaje = "¡No se han encontrado turnos disponibles en esos horarios!"
 
-    end_time = time.time()
-    duration = end_time - start_time
-    print(f"Duración del script: {duration:.2f} segundos")
+# Enviar el mensaje por Telegram
+enviar_mensaje_telegram(mensaje, chat_id, token)
+
+end_time = time.time()
+duration = end_time - start_time
+print(f"Duración del script: {duration:.2f} segundos")

@@ -8,6 +8,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from typing import TypedDict, List
 from telegram_sender import enviar_mensaje_telegram
 from dotenv import load_dotenv
+from webdriver_manager.chrome import ChromeDriverManager  # Importamos webdriver_manager
 
 load_dotenv()
 
@@ -26,12 +27,12 @@ class Turnos(TypedDict):
 
 
 class Browser:
-    browser, service = None, None
+    browser: webdriver.Chrome
     turnos: List[Turnos] = []
 
-    def __init__(self, driver: str):
-        self.service = Service(driver)
-        self.browser = webdriver.Chrome(service=self.service)
+    def __init__(self):
+        # Usamos ChromeDriverManager para obtener el controlador de Chrome
+        self.browser = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
 
     def open_page(self, url: str):
         self.browser.get(url)
@@ -67,20 +68,20 @@ class Browser:
         return horarios
 
     def get_info_test(self, by: By, value: str):
-            div = self.browser.find_element(by=by, value=value)
+        div = self.browser.find_element(by=by, value=value)
 
-            inputs = div.find_elements(By.CSS_SELECTOR, "div > input")
+        inputs = div.find_elements(By.CSS_SELECTOR, "div > input")
 
-            for input in inputs:
-                dia = input.get_attribute("data-date")
-                input.click()
-                time.sleep(1)
-                horarios = browser.get_info_selector(by=By.ID, value="hoursBody")
-                time.sleep(1)
-                turno: Turnos = {"dia": dia, "horarios": horarios}
-                self.turnos.append(turno)
+        for input in inputs:
+            dia = input.get_attribute("data-date")
+            input.click()
+            time.sleep(1)
+            horarios = self.get_info_selector(by=By.ID, value="hoursBody")
+            time.sleep(1)
+            turno: Turnos = {"dia": dia, "horarios": horarios}
+            self.turnos.append(turno)
 
-            print(self.turnos)
+        print(self.turnos)
 
     def filter_turns(self, hour: str):
         def has_hour(turno: Turnos) -> bool:
@@ -94,7 +95,7 @@ if __name__ == "__main__":
     # medir duración de script
     start_time = time.time()
 
-    browser = Browser(r"Drivers\chromedriver.exe")
+    browser = Browser()
 
     browser.open_page(url_login)
     WebDriverWait(browser.browser, 10).until(
@@ -139,4 +140,4 @@ if __name__ == "__main__":
 
     end_time = time.time()
     duration = end_time - start_time
-    print(f"Duración del script: {duration:.2f} segundos")  
+    print(f"Duración del script: {duration:.2f} segundos")
