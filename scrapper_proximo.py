@@ -123,7 +123,7 @@ if __name__ == "__main__":
 
     browser.get_info_test(by=By.CLASS_NAME, value="box-header-h")
 
-    selected_hour = "19:00 hs"
+    selected_hour = "12:00 hs"
 
     filtrados = browser.filter_turns(hour=selected_hour)
 
