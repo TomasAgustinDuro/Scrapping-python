@@ -1,9 +1,8 @@
 name: Run Python Script
 
 on:
-  push:
-    branches:
-      - main  # Esto ejecuta el workflow cada vez que se hace push a la rama main
+  schedule:
+    - cron: '*/1 * * * *'  # Esto ejecuta el workflow cada minuto
 
 jobs:
   run-script:
