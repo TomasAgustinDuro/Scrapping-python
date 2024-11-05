@@ -25,10 +25,10 @@ jobs:
         pip install -r requirements.txt  # Asegúrate de tener un archivo requirements.txt en tu repositorio
 
     - name: Run the script
-      env:  # Establece las variables de entorno necesarias
+      env:
         MY_USERNAME: ${{ secrets.MY_USERNAME }}
         MY_PASSWORD: ${{ secrets.MY_PASSWORD }}
         TOKEN: ${{ secrets.TOKEN }}
         CHAT_ID: ${{ secrets.CHAT_ID }}
       run: |
-        python ../scrapper_date.py
+        python scrapper_date.py  # Asegúrate de que la ruta sea correcta
