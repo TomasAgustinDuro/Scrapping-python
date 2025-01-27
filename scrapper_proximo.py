@@ -135,8 +135,7 @@ if __name__ == "__main__":
         mensaje = f"¡Se ha encontrado un turno disponible para las {selected_hour}! Para reservar el turno accede al siguiente link {url_reserva}"
 
         enviar_mensaje_telegram(mensaje, chat_id, token)
-    else:
-        print("No hay horarios")
+
 
     end_time = time.time()
     duration = end_time - start_time

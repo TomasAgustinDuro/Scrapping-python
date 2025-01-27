@@ -190,8 +190,7 @@ for hour, dias in turnos_por_hora.items():
 # Verificar si hay mensajes que enviar
 if mensajes:
     mensaje = "¡Se han encontrado turnos disponibles!\n" + "\n".join(mensajes) + f"\nPara reservar, accede al siguiente link {url_reserva}"
-else:
-    mensaje = "¡No se han encontrado turnos disponibles en esos horarios!"
+
 
 # Enviar el mensaje por Telegram
 enviar_mensaje_telegram(mensaje, chat_id, token)
