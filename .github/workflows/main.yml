@@ -24,4 +24,9 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run script
+        env:
+          MY_USERNAME: ${{ secrets.MY_USERNAME }}
+          MY_PASSWORD: ${{ secrets.MY_PASSWORD }}
+          TOKEN: ${{ secrets.TOKEN }}
+          CHAT_ID: ${{ secrets.CHAT_ID }}
         run: python scrapper_date.py
