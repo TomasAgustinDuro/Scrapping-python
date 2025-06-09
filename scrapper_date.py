@@ -9,12 +9,18 @@ from selenium.webdriver.support import expected_conditions as EC
 from typing import TypedDict, List
 from telegram_sender import enviar_mensaje_telegram
 from dotenv import load_dotenv
+import os
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.options import Options
+
 
 load_dotenv()
 
 my_username = os.getenv("MY_USERNAME")
 my_password = os.getenv("MY_PASSWORD")
+
+
+print(my_password)
 
 url_login = "https://login.buenosaires.gob.ar/"
 url_reserva = (
@@ -100,7 +106,7 @@ class Browser:
                                 self.turnos.append(turno)
 
                             edit_button = WebDriverWait(self.browser, 10).until(
-                                EC.element_to_be_clickable((By.ID, "edit"))
+                                EC.presence_of_element_located((By.ID, "edit"))
                             )
                             edit_button.click()
                             time.sleep(1)
@@ -124,7 +130,6 @@ class Browser:
 
         filtered_turns = list(filter(has_hour, self.turnos))
         return filtered_turns
-
 
 
 if __name__ == "__main__":
@@ -155,7 +160,7 @@ if __name__ == "__main__":
 
     browser.click_button(by=By.CSS_SELECTOR, value='[data-start="fecha"]')
 
-    WebDriverWait(browser.browser, 20).until(
+    WebDriverWait(browser.browser, 10).until(
         EC.presence_of_element_located((By.ID, "calendar"))
     )
 
@@ -189,11 +194,18 @@ for hour, dias in turnos_por_hora.items():
 
 # Verificar si hay mensajes que enviar
 if mensajes:
-    mensaje = "¡Se han encontrado turnos disponibles!\n" + "\n".join(mensajes) + f"\nPara reservar, accede al siguiente link {url_reserva}"
-
+    mensaje = (
+        "¡Se han encontrado turnos disponibles!\n"
+        + "\n".join(mensajes)
+        + f"\nPara reservar, accede al siguiente link {url_reserva}"
+    )
+else:
+    mensaje = "No se encontraron turnos disponibles."
+    # Preparar los mensajes para enviar
+    mensajes = [mensaje]
 
 # Enviar el mensaje por Telegram
-enviar_mensaje_telegram(mensaje, chat_id, token)
+enviar_mensaje_telegram(mensajes, chat_id, token)
 
 end_time = time.time()
 duration = end_time - start_time
