@@ -2,7 +2,7 @@ name: Scrape Every 6 Hours
 
 on:
   schedule:
-    - cron: "0 */6 * * *" # Cada 6 horas
+    - cron: "0 */3 * * *"
   workflow_dispatch: # Permite ejecutarlo manualmente también
 
 jobs:
