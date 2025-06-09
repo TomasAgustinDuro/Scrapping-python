@@ -1,29 +1,27 @@
-name: Run Python Script
+name: Scrape Every 6 Hours
 
 on:
   schedule:
-    - cron: '*/1 * * * *'  # Esto ejecuta el workflow cada minuto
+    - cron: "0 */6 * * *" # Cada 6 horas
+  workflow_dispatch: # Permite ejecutarlo manualmente también
 
 jobs:
   run-script:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.10'
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
 
-    - name: Install dependencies
-      run: |
-        python -m venv venv
-        . venv/bin/activate
-        pip install -r requirements.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-    - name: Run script
-      run: |
-        . venv/bin/activate
-        MY_USERNAME=${{ secrets.MY_USERNAME }} MY_PASSWORD=${{ secrets.MY_PASSWORD }} python scrapper_proximo.py  # Usa los secretos aquí
+      - name: Run script
+        run: python scrapper_date.py

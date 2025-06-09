@@ -19,8 +19,13 @@ load_dotenv()
 my_username = os.getenv("MY_USERNAME")
 my_password = os.getenv("MY_PASSWORD")
 
+options = Options()
+options.add_argument("--headless")
+options.add_argument("--no-sandbox")
+options.add_argument("--disable-dev-shm-usage")
+options.add_argument("--window-size=1920,1080")
+options.add_argument("--disable-gpu")
 
-print(my_password)
 
 url_login = "https://login.buenosaires.gob.ar/"
 url_reserva = (
@@ -40,7 +45,7 @@ class Browser:
     def __init__(self):
         # Usar webdriver_manager para manejar el driver
         self.browser = webdriver.Chrome(
-            service=Service(ChromeDriverManager().install())
+            service=Service(ChromeDriverManager().install()), options=options
         )
 
     def open_page(self, url: str):
@@ -154,7 +159,7 @@ if __name__ == "__main__":
 
     browser.open_page(url_reserva)
 
-    WebDriverWait(browser.browser, 10).until(
+    WebDriverWait(browser.browser, 30).until(
         EC.presence_of_element_located((By.CSS_SELECTOR, '[data-start="fecha"]'))
     )
 
