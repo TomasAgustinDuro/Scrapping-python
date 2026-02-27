@@ -7,9 +7,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from typing import TypedDict, List
-from telegram_sender import enviar_mensaje_telegram
+from email_sender import email_sender
 from dotenv import load_dotenv
-import os
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.options import Options
 
@@ -187,10 +186,6 @@ for filtrado in filtrados:
         if hour in filtrado["horarios"]:
             turnos_por_hora[hour].append(dia_formateado)
 
-# Construir el mensaje
-token = os.getenv("TOKEN")
-chat_id = os.getenv("CHAT_ID")
-
 mensajes = []
 for hour, dias in turnos_por_hora.items():
     if dias:
@@ -204,13 +199,12 @@ if mensajes:
         + "\n".join(mensajes)
         + f"\nPara reservar, accede al siguiente link {url_reserva}"
     )
-else:
-    mensaje = "No se encontraron turnos disponibles."
-    # Preparar los mensajes para enviar
-    mensajes = [mensaje]
+# else:
+#     mensaje = "No se encontraron turnos disponibles."
+#     # Preparar los mensajes para enviar
+#     mensajes = [mensaje]
 
-# Enviar el mensaje por Telegram
-enviar_mensaje_telegram(mensajes, chat_id, token)
+email_sender(mensaje)
 
 end_time = time.time()
 duration = end_time - start_time
