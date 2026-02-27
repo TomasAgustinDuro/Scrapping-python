@@ -122,8 +122,6 @@ class Browser:
 
                 time.sleep(1)
 
-            print(self.turnos)
-
         except Exception as e:
             print(f"Error al procesar la información: {str(e)}")
 
@@ -199,12 +197,12 @@ if mensajes:
         + "\n".join(mensajes)
         + f"\nPara reservar, accede al siguiente link {url_reserva}"
     )
+    email_sender(mensaje)
 # else:
 #     mensaje = "No se encontraron turnos disponibles."
 #     # Preparar los mensajes para enviar
 #     mensajes = [mensaje]
 
-email_sender(mensaje)
 
 end_time = time.time()
 duration = end_time - start_time
