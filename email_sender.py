@@ -1,66 +1,66 @@
 """
 Módulo de envío de alertas por email vía Gmail SMTP.
 
-Expone la función email_sender, que se encarga de autenticarse
-en el servidor SMTP de Gmail y enviar el mensaje de notificación
-a las cuentas configuradas en las variables de entorno.
+Expone la función email_sender que se conecta al servidor SMTP de Gmail,
+se autentica con un App Password y envía la notificación de turnos
+disponibles a los destinatarios configurados por variable de entorno.
+
+Variables de entorno requeridas:
+    MY_USERNAME: Email del remitente (también se usa como primer destinatario).
+    SECRET_PASSWORD: App Password de Gmail (16 caracteres, no la contraseña normal).
+    ANOTHER_EMAIL: Email del segundo destinatario.
 """
 
+import os
 from smtplib import SMTP
-from dotenv import load_dotenv
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-import os
+
+from dotenv import load_dotenv
 
 
-def email_sender(mensajes: str) -> None:
-    """Envía un email de alerta a las cuentas configuradas en el entorno.
+def email_sender(body_message: str) -> None:
+    """Envía un email de alerta con los turnos disponibles.
 
-    Se conecta al servidor SMTP de Gmail usando STARTTLS, se autentica
-    con las credenciales de entorno y despacha el mensaje a una lista
-    de destinatarios. Si las credenciales no están disponibles o falla
-    la conexión, imprime el error sin relanzar la excepción.
+    Se conecta a smtp.gmail.com:587 con STARTTLS, se autentica con
+    las credenciales de entorno y envía el mensaje a los destinatarios.
+
+    Si las credenciales no están configuradas, imprime una advertencia.
+    Si la conexión SMTP falla, imprime el error sin relanzar la excepción
+    para no interrumpir el flujo del scraper.
 
     Args:
-        mensajes: Cuerpo del email en texto plano con los turnos disponibles
-                  encontrados por el scraper.
-
-    Environment Variables:
-        MY_USERNAME: Email del remitente y primer destinatario.
-        SECRET_PASSWORD: App Password de Gmail del remitente.
-        ANOTHER_EMAIL: Email del segundo destinatario (puede ser el mismo que MY_USERNAME).
+        body_message: Cuerpo del email en texto plano con los turnos
+                      encontrados y el link de reserva.
     """
     load_dotenv()
 
-    my_username = os.getenv("MY_USERNAME")
-    my_password = os.getenv("SECRET_PASSWORD")
-    second_email = os.getenv("ANOTHER_EMAIL")
+    sender_email = os.getenv("MY_USERNAME")
+    sender_password = os.getenv("SECRET_PASSWORD")
+    second_recipient = os.getenv("ANOTHER_EMAIL")
+
+    if not sender_email or not sender_password:
+        print(
+            "Error: MY_USERNAME o SECRET_PASSWORD no están configurados. "
+            "No se puede enviar el email.",
+            flush=True,
+        )
+        return
+
+    recipients = [sender_email, second_recipient]
 
     try:
-        email_server = "smtp.gmail.com"
-        port = 587
-        server = SMTP(email_server, port)
-
+        server = SMTP("smtp.gmail.com", 587)
         server.starttls()
+        server.login(sender_email, sender_password)
 
-        if my_username and my_password:
-            to_addrs = [my_username, second_email]
-            server.login(my_username, my_password)
+        message = MIMEMultipart()
+        message["From"] = sender_email
+        message["To"] = ", ".join(recipients)
+        message["Subject"] = "Nuevo turno disponible para Padel"
+        message.attach(MIMEText(body_message, "plain"))
 
-            from_addr = my_username
-            subj = "Nuevo turno disponible para Padel"
-
-            msg = MIMEMultipart()
-            msg["From"] = my_username
-            msg["To"] = ", ".join(to_addrs)
-            msg["Subject"] = subj
-
-            msg.attach(MIMEText(mensajes, "plain"))
-
-            server.sendmail(from_addr, to_addrs, msg.as_string())
-
-            server.quit()
-        else:
-            print("Error: Credenciales no encontradas")
-    except Exception as e:
-        print(f"Error al enviar el email: {e}")
+        server.sendmail(sender_email, recipients, message.as_string())
+        server.quit()
+    except Exception as smtp_error:
+        print(f"Error al enviar el email: {smtp_error}", flush=True)
