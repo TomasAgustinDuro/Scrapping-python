@@ -147,30 +147,34 @@ class Browser:
         self.add_inputs(by=By.ID, value="password-text-field", text=password)
         self.click_button(by=By.ID, value="login")
 
-    def change_month(self, by: By, value:str):
-        month_element = self.driver.find_element(By.ID, "monthSelected")
-        mes_actual_str = month_element.get_attribute("data-month")
-        mes_actual = int(mes_actual_str)
+    def change_month(self) -> bool:
+        """Intenta avanzar al mes siguiente en el calendario del portal.
 
-        mes_siguiente_str = str(mes_actual + 1).zfil(2)
+        Lee el mes actual del elemento #monthSelected, calcula el siguiente
+        y hace click en la opción correspondiente del dropdown.
 
-        dropdown_button = self.driver.find_element(By.CSS_SELECTOR, "#months button.dropbtn")
-        self.driver.execute_script("arguments[0].click()", dropdown_button)
-        time.sleep(0.5)
-
-        selector_mes_sig = f"#months .dropdown-content [data-month='{mes_siguiente_str}']"
-
+        Returns:
+            True si el cambio de mes fue exitoso, False si no hay mes siguiente.
+        """
         try:
+            month_element = self.driver.find_element(By.ID, "monthSelected")
+            mes_actual_str = month_element.get_attribute("data-month")
+            mes_actual = int(mes_actual_str)
+
+            mes_siguiente_str = str(mes_actual + 1).zfill(2)
+
+            dropdown_button = self.driver.find_element(By.CSS_SELECTOR, "#months button.dropbtn")
+            self.driver.execute_script("arguments[0].click()", dropdown_button)
+            time.sleep(0.5)
+
+            selector_mes_sig = f"#months .dropdown-content [data-month='{mes_siguiente_str}']"
+
             opcion_siguiente = self.driver.find_element(By.CSS_SELECTOR, selector_mes_sig)
             self.driver.execute_script("arguments[0].click();", opcion_siguiente)
-            time.sleep(1) 
+            time.sleep(1)
             return True
-        except:
-            self.driver.execute_script("arguments[0].click();", dropdown_button)
-            return False
-
-        except Exception as e:
-            print(f"Error al intentar cambiar de mes: {str(e)}")
+        except Exception as month_error:
+            print(f"Error al intentar cambiar de mes: {str(month_error)}")
             return False
 
     def extract_calendar_turns(self, by: By, value: str) -> None:
