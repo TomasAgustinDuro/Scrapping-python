@@ -38,7 +38,8 @@ jobs:
         env:
           MY_USERNAME: ${{ secrets.MY_USERNAME }}
           MY_PASSWORD: ${{ secrets.MY_PASSWORD }}
+          SECRET_PASSWORD: ${{ secrets.SECRET_PASSWORD }}
+          ANOTHER_EMAIL: ${{ secrets.ANOTHER_EMAIL }}
           TOKEN: ${{ secrets.TOKEN }}
           CHAT_ID: ${{ secrets.CHAT_ID }}
-          GITHUB_ACTIONS: "true"
         run: python scrapper_date.py
