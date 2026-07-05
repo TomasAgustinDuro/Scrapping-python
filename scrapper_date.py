@@ -257,16 +257,13 @@ class Browser:
         return list(filter(has_requested_hour, self.turnos))
 
 def run() -> None:
-    """Ejecuta el flujo completo del scraper de turnos de pádel GCBA.
-
-    Abre el portal, se autentica, navega al formulario de reserva,
-    extrae los turnos disponibles y envía un email si encuentra los
-    horarios buscados.
-    """
+    """Ejecuta el flujo completo del scraper de turnos de pádel GCBA."""
     browser = None
     try:
+        print("[1/7] Iniciando navegador...", flush=True)
         browser = Browser()
 
+        print("[2/7] Abriendo portal de login...", flush=True)
         browser.open_page(url_login)
 
         WebDriverWait(browser.driver, 5).until(
@@ -277,8 +274,11 @@ def run() -> None:
         WebDriverWait(browser.driver, 5).until(
             EC.element_to_be_clickable((By.ID, "password-text-field"))
         )
+
+        print("[3/7] Haciendo login...", flush=True)
         browser.login(username=my_username, password=my_password)
 
+        print("[4/7] Navegando al formulario de reserva...", flush=True)
         browser.open_page(url_reserva)
 
         WebDriverWait(browser.driver, 30).until(
@@ -289,45 +289,64 @@ def run() -> None:
         WebDriverWait(browser.driver, 5).until(
             EC.element_to_be_clickable((By.ID, "calendar"))
         )
-        browser.extract_calendar_turns(By.ID, "calendar")
 
+        print("[5/7] Extrayendo turnos del mes actual...", flush=True)
+        browser.extract_calendar_turns(By.ID, "calendar")
+        print(f"       Turnos mes actual: {len(browser.turnos)}", flush=True)
+
+        print("[6/7] Intentando cambiar de mes...", flush=True)
         if browser.change_month():
             browser.extract_calendar_turns(By.ID, "calendar")
+            print(f"       Turnos acumulados: {len(browser.turnos)}", flush=True)
+        else:
+            print("       No se pudo cambiar de mes (normal si no hay mes siguiente)", flush=True)
+
+        print(f"\n=== TURNOS ENCONTRADOS: {len(browser.turnos)} ===", flush=True)
+        for turno in browser.turnos:
+            print(f"  - {turno['dia']}: {turno['horarios'][:80]}", flush=True)
 
         selected_hours = ["15:00 hs", "19:00 hs"]
 
-        # Inicializa el mapa de horas → días disponibles
+        # Agrupa los turnos filtrados por hora
         turnos_por_hora: dict[str, List[str]] = {hour: [] for hour in selected_hours}
 
-        # Agrupa los turnos filtrados por hora
         for turno in browser.filter_turns(hours=selected_hours):
-            dia_formateado = datetime.strptime(turno["dia"], "%Y-%m-%d").strftime("%d/%m")
+            dia_formateado = datetime.strptime(
+                turno["dia"], "%Y-%m-%d"
+            ).strftime("%d/%m")
             for hour in selected_hours:
                 if hour in turno["horarios"]:
                     turnos_por_hora[hour].append(dia_formateado)
 
-        # Construye los mensajes solo para las horas con turnos disponibles
+        # Construye mensajes
         mensajes = [
             f"Turnos disponibles a las {hour}: {', '.join(dias)}"
             for hour, dias in turnos_por_hora.items()
             if dias
         ]
 
-        # Envía el email solo si hay al menos un turno disponible
+        print(f"\n[7/7] Resultado del filtrado:", flush=True)
         if mensajes:
+            for msg in mensajes:
+                print(f"  ✓ {msg}", flush=True)
             mensaje = (
                 "¡Se han encontrado turnos disponibles!\n"
                 + "\n".join(mensajes)
                 + f"\nPara reservar, accedé al siguiente link: {url_reserva}"
             )
+            print("\nEnviando email...", flush=True)
             email_sender(mensaje)
+            print("Email enviado.", flush=True)
+        else:
+            print("  ✗ No hay turnos en los horarios buscados. No se envía email.", flush=True)
 
     except Exception as run_error:
-        print(f"El script falló en ejecución: {str(run_error)}", file=sys.stderr)
-        sys.exit(1)  # Exit code 1 marca el run como fallido en GitHub Actions
+        print(f"\n❌ El script falló: {str(run_error)}", file=sys.stderr, flush=True)
+        sys.exit(1)
     finally:
         if browser is not None:
             browser.close_browser()
+        print("\nScript finalizado.", flush=True)
 
 
 if __name__ == "__main__":
