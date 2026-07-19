@@ -17,6 +17,7 @@ from typing import List, TypedDict
 
 from dotenv import load_dotenv
 from email_sender import email_sender
+from telegram_sender import enviar_mensaje_telegram
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -28,6 +29,8 @@ load_dotenv()
 
 my_username = os.getenv("MY_USERNAME")
 my_password = os.getenv("MY_PASSWORD")
+telegram_token = os.getenv("TOKEN")
+telegram_chat_id = os.getenv("CHAT_ID")
 
 url_login = "https://login.buenosaires.gob.ar/"
 url_reserva = (
@@ -334,11 +337,19 @@ def run() -> None:
                 + "\n".join(mensajes)
                 + f"\nPara reservar, accedé al siguiente link: {url_reserva}"
             )
-            print("\nEnviando email...", flush=True)
-            email_sender(mensaje)
-            print("Email enviado.", flush=True)
+            print("\nEnviando mensaje por Telegram...", flush=True)
+            enviar_mensaje_telegram(
+                mensaje=mensaje,
+                chat_id=telegram_chat_id,
+                token=telegram_token,
+            )
         else:
-            print("  ✗ No hay turnos en los horarios buscados. No se envía email.", flush=True)
+            print("  ✗ No hay turnos en los horarios buscados.", flush=True)
+            enviar_mensaje_telegram(
+                mensaje="Script ejecutado correctamente. No se encontraron turnos en los horarios buscados.",
+                chat_id=telegram_chat_id,
+                token=telegram_token,
+            )
 
     except Exception as run_error:
         print(f"\n❌ El script falló: {str(run_error)}", file=sys.stderr, flush=True)
