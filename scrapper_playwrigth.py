@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 from datetime import date, datetime
 from pathlib import Path
 from typing import TypedDict
@@ -31,6 +32,44 @@ telegram_token = os.getenv("TOKEN")
 telegram_chat_id = os.getenv("CHAT_ID")
 
 heartbeat_file = Path(__file__).parent / "last_heartbeat.txt"
+
+
+def navigate_with_retry(
+    page, url: str, max_retries: int = 3, wait_until: str = "load"
+) -> None:
+    """Navega a una URL con reintentos y backoff exponencial.
+
+    Args:
+        page: Objeto page de Playwright.
+        url: URL a navegar.
+        max_retries: Máximo número de intentos (default: 3).
+        wait_until: Estado de carga esperado (default: "load").
+
+    Raises:
+        PlaywrightError: Si fallan todos los reintentos.
+    """
+    last_error = None
+    for attempt in range(1, max_retries + 1):
+        try:
+            page.goto(url, wait_until=wait_until)
+            return
+        except PlaywrightError as e:
+            last_error = e
+            if attempt < max_retries:
+                wait_time = 2 ** (attempt - 1)  # 1s, 2s, 4s
+                print(
+                    f"Intento {attempt}/{max_retries} falló, "
+                    f"reintentando en {wait_time}s: {e!s}",
+                    flush=True,
+                )
+                time.sleep(wait_time)
+            else:
+                print(
+                    f"Todos los {max_retries} intentos fallaron para {url}",
+                    flush=True,
+                )
+
+    raise last_error
 
 
 class Turnos(TypedDict):
@@ -81,14 +120,17 @@ class Browser:
         self.page = self.context.new_page()
 
     def open_login_page(self, url: str):
-        self.page.goto(url)
+        navigate_with_retry(self.page, url, max_retries=3)
         self.page.locator("#email").fill(my_username)
         self.page.locator("#password-text-field").fill(my_password)
         self.page.locator("#login").click()
+        self.page.wait_for_load_state("networkidle", timeout=10000)
 
     def open_reserve_page(self, url: str):
-        self.page.goto(url)
-
+        navigate_with_retry(self.page, url, max_retries=3, wait_until="networkidle")
+        self.page.locator('[data-start="fecha"]').wait_for(
+            state="visible", timeout=5000
+        )
         self.page.locator('[data-start="fecha"]').click()
 
     def change_month(self):
