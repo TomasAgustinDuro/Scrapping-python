@@ -1,12 +1,15 @@
 name: Scrape Every 3 Hours
 
+# El cron automático se desactivó: el portal bloquea las IPs de los runners
+# de GitHub Actions (datacenter/cloud) a nivel de DNS/red. La ejecución
+# programada ahora corre vía cron local (ver `crontab -l`), que usa una IP
+# residencial y no está bloqueada. Este workflow queda solo para pruebas
+# manuales puntuales.
 on:
-  schedule:
-    - cron: "0 */3 * * *"
-  workflow_dispatch: # Permite ejecutarlo manualmente también
+  workflow_dispatch: # Permite ejecutarlo manualmente para pruebas
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   run-script:
@@ -40,14 +43,3 @@ jobs:
           CHAT_ID: ${{ secrets.CHAT_ID }}
           CI: "true"
         run: python scrapper_playwrigth.py
-
-      - name: Persist heartbeat state
-        if: always()
-        run: |
-          if ! git diff --quiet -- last_heartbeat.txt; then
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add last_heartbeat.txt
-            git commit -m "chore: actualiza last_heartbeat.txt [skip ci]"
-            git push
-          fi

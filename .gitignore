@@ -214,3 +214,7 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Estado local del bot de turnos (ya no se commitea, corre vía cron local)
+last_heartbeat.txt
+logs/
